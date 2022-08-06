@@ -1,12 +1,16 @@
-const MULTIPLIER: f64 = 259.999;
+use glam::DVec3;
+
+const MULTIPLIER: f64 = 256.0;
 
 pub trait ColorFormatter {
-    fn format_color(self) -> String;
+    fn format_color(self, samples_per_pixel: u64) -> String;
 }
 
-impl ColorFormatter for glam::DVec3 {
-    fn format_color(self) -> String {
-        let output = self * MULTIPLIER;
+impl ColorFormatter for DVec3 {
+    fn format_color(self, samples_per_pixel: u64) -> String {
+        let output = self / (samples_per_pixel as f64);
+        let output = output.clamp(DVec3::splat(0.0), DVec3::splat(0.999));
+        let output = output * MULTIPLIER;
 
         let r = output.x as u64;
         let g = output.y as u64;
