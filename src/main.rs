@@ -1,17 +1,19 @@
 mod camera;
 mod color_formatter;
 mod hit;
+mod material;
 mod random;
 mod ray;
+mod reflect;
 mod sphere;
 
 use crate::{color_formatter::ColorFormatter, sphere::Sphere};
 use camera::Camera;
 use glam::DVec3;
 use hit::{Hittable, World};
-use random::RandomInUnitSphere;
+use material::{Lambertian, Metal};
 use ray::Ray;
-use std::io::Write;
+use std::{io::Write, rc::Rc};
 
 const IMAGE_WIDTH: u64 = 256;
 const IMAGE_HEIGHT: u64 = ((IMAGE_WIDTH as f64) / Camera::ASPECT_RATIO) as u64;
@@ -25,10 +27,22 @@ type Color = DVec3;
 fn main() {
     let camera = Camera::new();
 
+    let material_ground = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
+    let material_center = Rc::new(Lambertian::new(Color::new(0.7, 0.3, 0.3)));
+    let material_left = Rc::new(Metal::new(Color::splat(0.8)));
+    let material_right = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2)));
+
+    let sphere_ground = Sphere::new_boxed(DVec3::new(0.0, -100.5, -1.0), 100.0, material_ground);
+    let sphere_center = Sphere::new_boxed(DVec3::new(0.0, 0.0, -1.0), 0.5, material_center);
+    let sphere_left = Sphere::new_boxed(DVec3::new(-1.0, 0.0, -1.0), 0.5, material_left);
+    let sphere_right = Sphere::new_boxed(DVec3::new(1.0, 0.0, -1.0), 0.5, material_right);
+
     // World setup
     let world: Vec<Box<dyn Hittable>> = vec![
-        Box::new(Sphere::new(DVec3::new(0.0, 0.0, -1.0), 0.5)),
-        Box::new(Sphere::new(DVec3::new(0.0, -100.5, -1.0), 100.0)),
+        sphere_ground,
+        sphere_center,
+        sphere_left,
+        sphere_right
     ];
 
     println!("P3");
@@ -67,16 +81,15 @@ fn main() {
 
 fn ray_color(ray: &Ray, world: &World, recursion_depth: u8) -> Color {
     if recursion_depth == 0 {
-        return DVec3::ZERO;
+        return Color::ZERO;
     }
 
     if let Some(record) = world.hit(ray, (0.001, f64::INFINITY)) {
-        let target =
-            record.position + record.normal + DVec3::random_in_unit_sphere().normalize_or_zero();
-
-        let ray = Ray::new(record.position, target - record.position);
-
-        0.5 * ray_color(&ray, world, recursion_depth - 1)
+        if let Some((attenuation, scattered_ray)) = record.material.scatter(ray, &record) {
+            attenuation * ray_color(&scattered_ray, world, recursion_depth - 1)
+        } else {
+            Color::ZERO
+        }
     } else {
         let unit_direction = ray.direction().normalize();
 

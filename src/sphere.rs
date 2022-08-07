@@ -1,14 +1,24 @@
-use crate::hit::{Face, HitRecord, Hittable};
+use std::rc::Rc;
+
+use crate::{
+    hit::{Face, HitRecord, Hittable},
+    material::Scatter,
+};
 use glam::DVec3;
 
 pub struct Sphere {
     pub center: DVec3,
+    pub material: Rc<dyn Scatter>,
     pub radius: f64,
 }
 
 impl Sphere {
-    pub fn new(center: DVec3, radius: f64) -> Self {
-        Self { center, radius }
+    pub fn new_boxed(center: DVec3, radius: f64, material: Rc<dyn Scatter>) -> Box<Self> {
+        Box::new(Self {
+            center,
+            material,
+            radius,
+        })
     }
 }
 
@@ -53,8 +63,9 @@ impl Hittable for Sphere {
 
         Some(HitRecord {
             face,
-            position,
+            material: self.material.clone(),
             normal,
+            position,
             t,
         })
     }

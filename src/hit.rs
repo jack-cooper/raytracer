@@ -1,11 +1,12 @@
+use crate::{material::Scatter, ray::Ray};
 use glam::DVec3;
-
-use crate::ray::Ray;
+use std::rc::Rc;
 
 pub struct HitRecord {
     pub face: Face,
-    pub position: DVec3,
+    pub material: Rc<dyn Scatter>,
     pub normal: DVec3,
+    pub position: DVec3,
     pub t: f64,
 }
 
