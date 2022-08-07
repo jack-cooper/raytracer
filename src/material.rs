@@ -1,7 +1,11 @@
 use glam::DVec3;
 
 use crate::{
-    hit::HitRecord, random::RandomInUnitSphere, ray::Ray, reflect::ReflectableDVec3, Color,
+    hit::{Face, HitRecord},
+    random::RandomInUnitSphere,
+    ray::Ray,
+    reflect::ReflectableDVec3,
+    Color,
 };
 
 pub trait Scatter: Send + Sync {
@@ -58,5 +62,52 @@ impl Scatter for Metal {
         let scattered_ray = Ray::new(record.position, scatter_direction);
 
         (scattered_ray.direction().dot(record.normal) > 0.0).then_some((self.albedo, scattered_ray))
+    }
+}
+
+pub struct Dielectric {
+    refractive_index: f64,
+}
+
+impl Dielectric {
+    pub fn new(refractive_index: f64) -> Self {
+        Self { refractive_index }
+    }
+
+    fn reflectance(cos_theta: f64, refractive_index: f64) -> f64 {
+        // Magic Schlick formula, just trust it
+        let r0 = (1.0 - refractive_index) / (1.0 + refractive_index);
+        let r0 = r0.powi(2);
+
+        r0 + (1.0 - r0) * (1.0 - cos_theta).powi(5)
+    }
+}
+
+impl Scatter for Dielectric {
+    fn scatter(&self, ray: &Ray, record: &HitRecord) -> Option<(Color, Ray)> {
+        let refraction_ratio = if record.face == Face::Front {
+            self.refractive_index.recip()
+        } else {
+            self.refractive_index
+        };
+
+        let unit_direction = ray.direction().normalize();
+
+        let cos_theta = unit_direction.dot(-record.normal).min(1.0);
+        let sin_theta = (1.0 - cos_theta.powi(2)).sqrt();
+
+        let can_not_refract = refraction_ratio * sin_theta > 1.0;
+
+        let will_reflect = fastrand::f64() < Self::reflectance(cos_theta, refraction_ratio);
+
+        let new_direction = if can_not_refract || will_reflect {
+            unit_direction.reflect(record.normal) // total internal reflection
+        } else {
+            unit_direction.refract(record.normal, refraction_ratio) // refraction
+        };
+
+        let scattered_ray = Ray::new(record.position, new_direction);
+
+        Some((Color::ONE, scattered_ray))
     }
 }

@@ -7,40 +7,50 @@ mod ray;
 mod reflect;
 mod sphere;
 
-use crate::{color_formatter::ColorFormatter, sphere::Sphere};
 use camera::Camera;
+use color_formatter::ColorFormatter;
 use glam::DVec3;
 use hit::{Hittable, World};
-use material::{Lambertian, Metal};
+use material::Lambertian;
 use ray::Ray;
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
+use sphere::Sphere;
 use std::{io::Write, sync::Arc};
 
-const IMAGE_WIDTH: u64 = 512;
-const IMAGE_HEIGHT: u64 = ((IMAGE_WIDTH as f64) / Camera::ASPECT_RATIO) as u64;
+use crate::material::{Dielectric, Metal};
 
-const MAX_DEPTH: u8 = 5;
+const ASPECT_RATIO: f64 = 16.0 / 9.0;
+
+const IMAGE_WIDTH: u64 = 512;
+const IMAGE_HEIGHT: u64 = ((IMAGE_WIDTH as f64) / ASPECT_RATIO) as u64;
+
+const MAX_DEPTH: u8 = 100;
 
 const SAMPLES_PER_PIXEL: u64 = 100;
 
 type Color = DVec3;
 
 fn main() {
-    let camera = Camera::new();
-
     let material_ground = Arc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
-    let material_center = Arc::new(Lambertian::new(Color::new(0.7, 0.3, 0.3)));
-    let material_left = Arc::new(Metal::new(Color::splat(0.8), 0.3));
-    let material_right = Arc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 1.0));
+    let material_center = Arc::new(Lambertian::new(Color::new(0.1, 0.2, 0.5)));
+    let material_left = Arc::new(Dielectric::new(1.5));
+    let material_right = Arc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 0.14));
 
     let sphere_ground = Sphere::new_boxed(DVec3::new(0.0, -100.5, -1.0), 100.0, material_ground);
     let sphere_center = Sphere::new_boxed(DVec3::new(0.0, 0.0, -1.0), 0.5, material_center);
     let sphere_left = Sphere::new_boxed(DVec3::new(-1.0, 0.0, -1.0), 0.5, material_left);
     let sphere_right = Sphere::new_boxed(DVec3::new(1.0, 0.0, -1.0), 0.5, material_right);
 
-    // World setup
     let world: Vec<Box<dyn Hittable>> =
         vec![sphere_ground, sphere_center, sphere_left, sphere_right];
+
+    let camera = Camera::new(
+        DVec3::new(-2.0, 2.0, 1.0),
+        DVec3::NEG_Z,
+        DVec3::Y,
+        15.0,
+        ASPECT_RATIO,
+    );
 
     println!("P3");
     println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");

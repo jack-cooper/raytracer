@@ -10,32 +10,38 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub const ASPECT_RATIO: f64 = 16.0 / 9.0;
+    pub fn new(
+        position: DVec3,
+        target: DVec3,
+        up_vector: DVec3,
+        vertical_fov: f64,
+        aspect_ratio: f64,
+    ) -> Self {
+        let theta = std::f64::consts::PI / 180.0 * vertical_fov;
+        let viewport_height = 2.0 * (theta * 0.5).tan();
+        let viewport_width = aspect_ratio * viewport_height;
 
-    const VIEWPORT_HEIGHT: f64 = 2.0;
-    const VIEWPORT_WIDTH: f64 = Self::VIEWPORT_HEIGHT * Self::ASPECT_RATIO;
+        let camera_z = (position - target).normalize();
+        let camera_x = up_vector.cross(camera_z).normalize();
+        let camera_y = camera_z.cross(camera_x);
 
-    const FOCAL_LENGTH: f64 = 1.0;
+        let horizontal = camera_x * viewport_width;
+        let vertical = camera_y * viewport_height;
 
-    pub fn new() -> Self {
-        let origin = DVec3::ZERO;
-        let horizontal = DVec3::X * Self::VIEWPORT_WIDTH;
-        let vertical = DVec3::Y * Self::VIEWPORT_HEIGHT;
-        let lower_left_corner =
-            origin - horizontal / 2.0 - vertical / 2.0 - DVec3::Z * Self::FOCAL_LENGTH;
+        let lower_left_corner = position - horizontal / 2.0 - vertical / 2.0 - camera_z;
 
         Self {
             horizontal,
             lower_left_corner,
-            origin,
+            origin: position,
             vertical,
         }
     }
 
-    pub fn get_ray(&self, u: f64, v: f64) -> Ray {
+    pub fn get_ray(&self, x: f64, y: f64) -> Ray {
         Ray::new(
             self.origin,
-            self.lower_left_corner + u * self.horizontal + v * self.vertical - self.origin,
+            self.lower_left_corner + x * self.horizontal + y * self.vertical - self.origin,
         )
     }
 }

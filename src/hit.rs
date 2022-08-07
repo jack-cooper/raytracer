@@ -10,6 +10,7 @@ pub struct HitRecord {
     pub t: f64,
 }
 
+#[derive(PartialEq, Eq)]
 pub enum Face {
     Back,
     Front,
