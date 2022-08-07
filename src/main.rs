@@ -16,7 +16,7 @@ use ray::Ray;
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use std::{io::Write, sync::Arc};
 
-const IMAGE_WIDTH: u64 = 256;
+const IMAGE_WIDTH: u64 = 512;
 const IMAGE_HEIGHT: u64 = ((IMAGE_WIDTH as f64) / Camera::ASPECT_RATIO) as u64;
 
 const MAX_DEPTH: u8 = 5;
