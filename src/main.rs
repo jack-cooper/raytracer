@@ -38,12 +38,8 @@ fn main() {
     let sphere_right = Sphere::new_boxed(DVec3::new(1.0, 0.0, -1.0), 0.5, material_right);
 
     // World setup
-    let world: Vec<Box<dyn Hittable>> = vec![
-        sphere_ground,
-        sphere_center,
-        sphere_left,
-        sphere_right
-    ];
+    let world: Vec<Box<dyn Hittable>> =
+        vec![sphere_ground, sphere_center, sphere_left, sphere_right];
 
     println!("P3");
     println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
