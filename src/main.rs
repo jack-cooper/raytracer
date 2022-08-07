@@ -13,7 +13,8 @@ use glam::DVec3;
 use hit::{Hittable, World};
 use material::{Lambertian, Metal};
 use ray::Ray;
-use std::{io::Write, rc::Rc};
+use rayon::prelude::{IntoParallelIterator, ParallelIterator};
+use std::{io::Write, sync::Arc};
 
 const IMAGE_WIDTH: u64 = 256;
 const IMAGE_HEIGHT: u64 = ((IMAGE_WIDTH as f64) / Camera::ASPECT_RATIO) as u64;
@@ -27,10 +28,10 @@ type Color = DVec3;
 fn main() {
     let camera = Camera::new();
 
-    let material_ground = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
-    let material_center = Rc::new(Lambertian::new(Color::new(0.7, 0.3, 0.3)));
-    let material_left = Rc::new(Metal::new(Color::splat(0.8)));
-    let material_right = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2)));
+    let material_ground = Arc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
+    let material_center = Arc::new(Lambertian::new(Color::new(0.7, 0.3, 0.3)));
+    let material_left = Arc::new(Metal::new(Color::splat(0.8)));
+    let material_right = Arc::new(Metal::new(Color::new(0.8, 0.6, 0.2)));
 
     let sphere_ground = Sphere::new_boxed(DVec3::new(0.0, -100.5, -1.0), 100.0, material_ground);
     let sphere_center = Sphere::new_boxed(DVec3::new(0.0, 0.0, -1.0), 0.5, material_center);
@@ -52,7 +53,7 @@ fn main() {
         eprint!("\rScanlines remaining: {:3}", y);
         std::io::stderr().flush().unwrap();
 
-        (0..IMAGE_WIDTH).for_each(|x| {
+        (0..IMAGE_WIDTH).into_par_iter().for_each(|x| {
             let x = x as f64;
             let y = y as f64;
 

@@ -1,10 +1,10 @@
 use crate::{material::Scatter, ray::Ray};
 use glam::DVec3;
-use std::rc::Rc;
+use std::sync::Arc;
 
 pub struct HitRecord {
     pub face: Face,
-    pub material: Rc<dyn Scatter>,
+    pub material: Arc<dyn Scatter>,
     pub normal: DVec3,
     pub position: DVec3,
     pub t: f64,
@@ -25,7 +25,7 @@ impl Hittable for World {
     }
 }
 
-pub trait Hittable {
+pub trait Hittable: Send + Sync {
     // `t` tuple can be considered to be (`t_min`, `t_max`)
     fn hit(&self, ray: &Ray, t: (f64, f64)) -> Option<HitRecord>;
 }

@@ -4,7 +4,7 @@ use crate::{
     hit::HitRecord, random::RandomInUnitSphere, ray::Ray, reflect::ReflectableDVec3, Color,
 };
 
-pub trait Scatter {
+pub trait Scatter: Send + Sync {
     fn scatter(&self, ray: &Ray, record: &HitRecord) -> Option<(Color, Ray)>;
 }
 

@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::{
     hit::{Face, HitRecord, Hittable},
@@ -8,12 +8,12 @@ use glam::DVec3;
 
 pub struct Sphere {
     pub center: DVec3,
-    pub material: Rc<dyn Scatter>,
+    pub material: Arc<dyn Scatter>,
     pub radius: f64,
 }
 
 impl Sphere {
-    pub fn new_boxed(center: DVec3, radius: f64, material: Rc<dyn Scatter>) -> Box<Self> {
+    pub fn new_boxed(center: DVec3, radius: f64, material: Arc<dyn Scatter>) -> Box<Self> {
         Box::new(Self {
             center,
             material,
