@@ -21,7 +21,7 @@ use crate::material::{Dielectric, Metal};
 
 const ASPECT_RATIO: f64 = 16.0 / 9.0;
 
-const IMAGE_WIDTH: u64 = 512;
+const IMAGE_WIDTH: u64 = 1024;
 const IMAGE_HEIGHT: u64 = ((IMAGE_WIDTH as f64) / ASPECT_RATIO) as u64;
 
 const MAX_DEPTH: u8 = 100;
@@ -34,7 +34,7 @@ fn main() {
     let material_ground = Arc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
     let material_center = Arc::new(Lambertian::new(Color::new(0.1, 0.2, 0.5)));
     let material_left = Arc::new(Dielectric::new(1.5));
-    let material_right = Arc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 0.14));
+    let material_right = Arc::new(Metal::new(Color::new(0.6, 0.6, 0.8), 0.14));
 
     let sphere_ground = Sphere::new_boxed(DVec3::new(0.0, -100.5, -1.0), 100.0, material_ground);
     let sphere_center = Sphere::new_boxed(DVec3::new(0.0, 0.0, -1.0), 0.5, material_center);
@@ -45,10 +45,10 @@ fn main() {
         vec![sphere_ground, sphere_center, sphere_left, sphere_right];
 
     let camera = Camera::new(
-        DVec3::new(-2.0, 2.0, 1.0),
+        DVec3::new(0.5, 2.0, 1.0),
         DVec3::NEG_Z,
         DVec3::Y,
-        15.0,
+        45.0,
         ASPECT_RATIO,
     );
 
