@@ -53,23 +53,30 @@ fn main() {
         eprint!("\rScanlines remaining: {:3}", y);
         std::io::stderr().flush().unwrap();
 
-        (0..IMAGE_WIDTH).into_par_iter().for_each(|x| {
-            let x = x as f64;
-            let y = y as f64;
+        let scanline: Vec<Color> = (0..IMAGE_WIDTH)
+            .into_par_iter()
+            .map(|x| {
+                let x = x as f64;
+                let y = y as f64;
 
-            let mut pixel = DVec3::ZERO;
+                let mut pixel = DVec3::ZERO;
 
-            (0..SAMPLES_PER_PIXEL).for_each(|_| {
-                let u = (x + fastrand::f64()) / width;
-                let v = (y + fastrand::f64()) / height;
+                (0..SAMPLES_PER_PIXEL).for_each(|_| {
+                    let u = (x + fastrand::f64()) / width;
+                    let v = (y + fastrand::f64()) / height;
 
-                let ray = camera.get_ray(u, v);
+                    let ray = camera.get_ray(u, v);
 
-                pixel += ray_color(&ray, &world, MAX_DEPTH);
-            });
+                    pixel += ray_color(&ray, &world, MAX_DEPTH);
+                });
 
+                pixel
+            })
+            .collect();
+
+        scanline.into_iter().for_each(|pixel| {
             println!("{}", pixel.format_color(SAMPLES_PER_PIXEL));
-        });
+        })
     });
 
     eprintln!();
