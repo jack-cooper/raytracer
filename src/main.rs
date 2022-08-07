@@ -1,18 +1,23 @@
 mod camera;
 mod color_formatter;
 mod hit;
+mod random;
 mod ray;
 mod sphere;
 
 use crate::{color_formatter::ColorFormatter, sphere::Sphere};
 use camera::Camera;
 use glam::DVec3;
-use hit::{HitRecord, Hittable, World};
+use hit::{Hittable, World};
+use random::RandomInUnitSphere;
 use ray::Ray;
 use std::io::Write;
 
 const IMAGE_WIDTH: u64 = 256;
 const IMAGE_HEIGHT: u64 = ((IMAGE_WIDTH as f64) / Camera::ASPECT_RATIO) as u64;
+
+const MAX_DEPTH: u8 = 5;
+
 const SAMPLES_PER_PIXEL: u64 = 100;
 
 type Color = DVec3;
@@ -49,7 +54,7 @@ fn main() {
 
                 let ray = camera.get_ray(u, v);
 
-                pixel += ray_color(&ray, &world);
+                pixel += ray_color(&ray, &world, MAX_DEPTH);
             });
 
             println!("{}", pixel.format_color(SAMPLES_PER_PIXEL));
@@ -60,9 +65,18 @@ fn main() {
     eprintln!("Finished.");
 }
 
-fn ray_color(ray: &Ray, world: &World) -> Color {
-    if let Some(HitRecord { normal, .. }) = world.hit(ray, (0.0, f64::INFINITY)) {
-        0.5 * (normal + 1.0)
+fn ray_color(ray: &Ray, world: &World, recursion_depth: u8) -> Color {
+    if recursion_depth == 0 {
+        return DVec3::ZERO;
+    }
+
+    if let Some(record) = world.hit(ray, (0.001, f64::INFINITY)) {
+        let target =
+            record.position + record.normal + DVec3::random_in_unit_sphere().normalize_or_zero();
+
+        let ray = Ray::new(record.position, target - record.position);
+
+        0.5 * ray_color(&ray, world, recursion_depth - 1)
     } else {
         let unit_direction = ray.direction().normalize();
 
