@@ -7,3 +7,6 @@ edition = "2021"
 fastrand = "1.8.0"
 glam = "0.21.3"
 rayon = "1.5.3"
+
+[profile.release]
+debug = 1
