@@ -16,7 +16,8 @@ use random::RandomInUnitSphere;
 use ray::Ray;
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use sphere::Sphere;
-use std::{io::Write, sync::Arc};
+use std::fmt::Write as _;
+use std::{fs, io::Write, sync::Arc};
 
 const ASPECT_RATIO: f64 = 16.0 / 9.0;
 
@@ -27,6 +28,8 @@ const MAX_DEPTH: u8 = 50;
 
 const SAMPLES_PER_PIXEL: u64 = 100;
 
+const OUTPUT_FILE: &str = "image.ppm";
+
 type Color = DVec3;
 
 fn main() {
@@ -34,13 +37,19 @@ fn main() {
 
     let camera = setup_camera();
 
-    print_output(&camera, &world);
+    write_output(&camera, &world);
 }
 
-fn print_output(camera: &Camera, world: &World) {
-    println!("P3");
-    println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
-    println!("255");
+fn write_output(camera: &Camera, world: &World) {
+    let output_size: usize = (3 + 10 + 4 + (IMAGE_HEIGHT) * IMAGE_WIDTH * 12)
+        .try_into()
+        .unwrap();
+
+    let mut output = String::with_capacity(output_size);
+
+    writeln!(output, "P3").unwrap();
+    writeln!(output, "{IMAGE_WIDTH} {IMAGE_HEIGHT}").unwrap();
+    writeln!(output, "255").unwrap();
 
     let width = (IMAGE_WIDTH - 1) as f64;
     let height = (IMAGE_HEIGHT - 1) as f64;
@@ -49,7 +58,7 @@ fn print_output(camera: &Camera, world: &World) {
         eprint!("\rScanlines remaining: {:3}", y);
         std::io::stderr().flush().unwrap();
 
-        let scanline: Vec<Color> = (0..IMAGE_WIDTH)
+        let scanline: Vec<_> = (0..IMAGE_WIDTH)
             .into_par_iter()
             .map(|x| {
                 let x = x as f64;
@@ -71,12 +80,14 @@ fn print_output(camera: &Camera, world: &World) {
             .collect();
 
         scanline.into_iter().for_each(|pixel| {
-            println!("{}", pixel.format_color(SAMPLES_PER_PIXEL));
+            writeln!(output, "{}", pixel.format_color(SAMPLES_PER_PIXEL)).unwrap();
         })
     });
 
     eprintln!();
     eprintln!("Finished.");
+
+    fs::write(OUTPUT_FILE, output).unwrap();
 }
 
 fn add_random_spheres(world: &mut World) {
