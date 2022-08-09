@@ -1,11 +1,14 @@
 use glam::DVec3;
 
-use crate::ray::Ray;
+use crate::{random::RandomInUnitSphere, ray::Ray};
 
 pub struct Camera {
+    camera_x: DVec3,
+    camera_y: DVec3,
     horizontal: DVec3,
+    lens_radius: f64,
     lower_left_corner: DVec3,
-    origin: DVec3,
+    position: DVec3,
     vertical: DVec3,
 }
 
@@ -16,6 +19,8 @@ impl Camera {
         up_vector: DVec3,
         vertical_fov: f64,
         aspect_ratio: f64,
+        aperture: f64,
+        focus_distance: f64,
     ) -> Self {
         let theta = std::f64::consts::PI / 180.0 * vertical_fov;
         let viewport_height = 2.0 * (theta * 0.5).tan();
@@ -25,23 +30,33 @@ impl Camera {
         let camera_x = up_vector.cross(camera_z).normalize();
         let camera_y = camera_z.cross(camera_x);
 
-        let horizontal = camera_x * viewport_width;
-        let vertical = camera_y * viewport_height;
+        let horizontal = camera_x * viewport_width * focus_distance;
+        let vertical = camera_y * viewport_height * focus_distance;
 
-        let lower_left_corner = position - horizontal / 2.0 - vertical / 2.0 - camera_z;
+        let lower_left_corner =
+            position - horizontal / 2.0 - vertical / 2.0 - camera_z * focus_distance;
 
         Self {
+            camera_x,
+            camera_y,
             horizontal,
+            lens_radius: aperture / 2.0,
             lower_left_corner,
-            origin: position,
+            position,
             vertical,
         }
     }
 
     pub fn get_ray(&self, x: f64, y: f64) -> Ray {
+        let radius = self.lens_radius * DVec3::random_in_unit_circle();
+
+        let offset = self.camera_x * radius.x + self.camera_y * radius.y;
+
         Ray::new(
-            self.origin,
-            self.lower_left_corner + x * self.horizontal + y * self.vertical - self.origin,
+            self.position + offset,
+            self.lower_left_corner + x * self.horizontal + y * self.vertical
+                - self.position
+                - offset,
         )
     }
 }
