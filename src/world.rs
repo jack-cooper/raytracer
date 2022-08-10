@@ -1,14 +1,16 @@
 use std::sync::Arc;
 
 use glam::DVec3;
+use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 
 use crate::{
-    dvec_extensions::RandomDVec3,
+    camera::Camera,
+    dvec_extensions::{ColorFormat, RandomDVec3},
     hit::{Collision, Hittable},
     material::*,
     ray::Ray,
     sphere::Sphere,
-    Color,
+    Color, IMAGE_HEIGHT, IMAGE_WIDTH, MAX_DEPTH, SAMPLES_PER_PIXEL,
 };
 
 pub struct World(Vec<Box<dyn Hittable>>);
@@ -70,6 +72,29 @@ impl World {
                 self.0.push(sphere);
             })
         });
+    }
+
+    pub fn get_scanline(&self, camera: &Camera, line: u32) -> Vec<String> {
+        let width = (IMAGE_WIDTH - 1) as f64;
+        let height = (IMAGE_HEIGHT - 1) as f64;
+
+        let y = f64::from(line);
+
+        (0..IMAGE_WIDTH)
+            .into_par_iter()
+            .map(f64::from)
+            .map(|x| {
+                (0..SAMPLES_PER_PIXEL).fold(DVec3::ZERO, |pixel, _| {
+                    let u = (x + fastrand::f64()) / width;
+                    let v = (y + fastrand::f64()) / height;
+
+                    let ray = camera.get_ray(u, v);
+
+                    pixel + self.ray_color(&ray, MAX_DEPTH)
+                })
+            })
+            .map(|pixel| pixel.format_color(SAMPLES_PER_PIXEL))
+            .collect()
     }
 
     pub fn ray_color(&self, ray: &Ray, recursion_depth: u8) -> Color {

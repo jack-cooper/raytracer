@@ -9,8 +9,8 @@ pub mod world;
 
 const ASPECT_RATIO: f64 = 16.0 / 9.0;
 
-const IMAGE_WIDTH: u64 = 1024;
-const IMAGE_HEIGHT: u64 = ((IMAGE_WIDTH as f64) / ASPECT_RATIO) as u64;
+const IMAGE_WIDTH: u32 = 1024;
+const IMAGE_HEIGHT: u32 = ((IMAGE_WIDTH as f64) / ASPECT_RATIO) as u32;
 
 const MAX_DEPTH: u8 = 50;
 
