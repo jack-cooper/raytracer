@@ -1,6 +1,6 @@
 use glam::DVec3;
 
-use crate::{random::RandomInUnitSphere, ray::Ray};
+use crate::{dvec_extensions::RandomDVec3, ray::Ray, ASPECT_RATIO};
 
 pub struct Camera {
     camera_x: DVec3,
@@ -57,6 +57,25 @@ impl Camera {
             self.lower_left_corner + x * self.horizontal + y * self.vertical
                 - self.position
                 - offset,
+        )
+    }
+}
+
+impl Default for Camera {
+    fn default() -> Self {
+        let position = DVec3::new(13.0, 2.0, 3.0);
+        let target = DVec3::ZERO;
+        let focus_distance = 10.0;
+        let aperture = 0.1;
+
+        Self::new(
+            position,
+            target,
+            DVec3::Y,
+            45.0,
+            ASPECT_RATIO,
+            aperture,
+            focus_distance,
         )
     }
 }

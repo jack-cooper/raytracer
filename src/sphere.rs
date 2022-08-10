@@ -1,19 +1,19 @@
 use std::sync::Arc;
 
 use crate::{
-    hit::{Face, HitRecord, Hittable},
-    material::Scatter,
+    hit::{Collision, Face, Hittable},
+    material::Material,
 };
 use glam::DVec3;
 
 pub struct Sphere {
     pub center: DVec3,
-    pub material: Arc<dyn Scatter>,
+    pub material: Arc<dyn Material>,
     pub radius: f64,
 }
 
 impl Sphere {
-    pub fn new_boxed(center: DVec3, radius: f64, material: Arc<dyn Scatter>) -> Box<Self> {
+    pub fn new_boxed(center: DVec3, radius: f64, material: Arc<dyn Material>) -> Box<Self> {
         Box::new(Self {
             center,
             material,
@@ -23,11 +23,11 @@ impl Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, ray: &crate::ray::Ray, (t_min, t_max): (f64, f64)) -> Option<HitRecord> {
+    fn hit(&self, ray: &crate::ray::Ray, (t_min, t_max): (f64, f64)) -> Option<Collision> {
         let distance_to_center = ray.origin() - self.center;
 
-        let a = ray.direction().length_squared();
-        let half_b = distance_to_center.dot(ray.direction());
+        let a = ray.delta().length_squared();
+        let half_b = distance_to_center.dot(ray.delta());
         let c = distance_to_center.length_squared() - self.radius.powi(2);
 
         let discriminant = half_b.powi(2) - a * c;
@@ -55,13 +55,13 @@ impl Hittable for Sphere {
         let position = ray.position_at(t);
         let outward_normal = (position - self.center) / self.radius;
 
-        let (face, normal) = if ray.direction().dot(outward_normal) < 0.0 {
+        let (face, normal) = if ray.delta().dot(outward_normal) < 0.0 {
             (Face::Front, outward_normal)
         } else {
             (Face::Back, -outward_normal)
         };
 
-        Some(HitRecord {
+        Some(Collision {
             face,
             material: self.material.clone(),
             normal,
